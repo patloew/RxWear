@@ -1,15 +1,13 @@
 package com.patloew.rxwear;
 
+import android.content.Context;
 import android.net.Uri;
+import android.support.annotation.NonNull;
 
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
-import com.google.android.gms.wearable.MessageApi;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.wearable.MessageClient;
 import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.Wearable;
-
-import java.util.concurrent.TimeUnit;
 
 import io.reactivex.ObservableEmitter;
 
@@ -25,36 +23,40 @@ import io.reactivex.ObservableEmitter;
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. */
+ * limitations under the License.
+ *
+ * FILE MODIFIED by Marek Wałach, 2018
+ *
+ *
+ */
 class MessageListenerObservable extends BaseObservable<MessageEvent> {
 
     final Uri uri;
     final Integer filterType;
 
-    private MessageApi.MessageListener listener;
+    private MessageClient.OnMessageReceivedListener listener;
 
-    MessageListenerObservable(RxWear rxWear, Uri uri, Integer filterType, Long timeout, TimeUnit timeUnit) {
-        super(rxWear, timeout, timeUnit);
+    MessageListenerObservable(@NonNull Context context, Uri uri, Integer filterType) {
+        super(context);
         this.uri = uri;
         this.filterType = filterType;
     }
 
     @Override
-    protected void onGoogleApiClientReady(GoogleApiClient apiClient, final ObservableEmitter<MessageEvent> emitter) {
-        listener = emitter::onNext;
+    void onSubscribe(ObservableEmitter<MessageEvent> messageEventObservableEmitter) {
+        listener = messageEventObservableEmitter::onNext;
 
-        ResultCallback<Status> resultCallback = new StatusErrorResultCallBack(emitter);
+        OnCompleteListener<Void> resultCallback = new StatusErrorResultCallBack<>(messageEventObservableEmitter);
 
-        if(uri != null) {
-            setupWearPendingResult(Wearable.MessageApi.addListener(apiClient, listener, uri, filterType), resultCallback);
+        if (uri != null) {
+            setupWearTask(Wearable.getMessageClient(context).addListener(listener, uri, filterType), resultCallback);
         } else {
-            setupWearPendingResult(Wearable.MessageApi.addListener(apiClient, listener), resultCallback);
+            setupWearTask(Wearable.getMessageClient(context).addListener(listener), resultCallback);
         }
     }
 
-
     @Override
-    protected void onUnsubscribed(GoogleApiClient apiClient) {
-        Wearable.MessageApi.removeListener(apiClient, listener);
+    void unSubscribe() {
+        Wearable.getMessageClient(context).removeListener(listener);
     }
 }

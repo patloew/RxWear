@@ -3,14 +3,6 @@ package com.patloew.rxwear;
 import android.content.Context;
 import android.support.annotation.NonNull;
 
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.wearable.Wearable;
-
-import java.util.concurrent.TimeUnit;
-
-import io.reactivex.Completable;
-import io.reactivex.Single;
-
 /* Copyright 2016 Patrick Löwenstein
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,57 +16,31 @@ import io.reactivex.Single;
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * FILE MODIFIED by Marek Wałach, 2018
+ *
+ *
  */
 public class RxWear {
 
-    Long timeoutTime = null;
-    TimeUnit timeoutUnit = null;
+    final Context context;
 
-    final Context ctx;
-
-    private final Capability capability = new Capability(this);
-    private final Channel channel = new Channel(this);
-    private final Data data = new Data(this);
-    private final Message message = new Message(this);
-    private final Node node = new Node(this);
+    private final Capability capability;
+    private final Channel channel;
+    private final Data data;
+    private final Message message;
+    private final Node node;
 
 
-    public RxWear(@NonNull Context ctx) {
-        this.ctx = ctx.getApplicationContext();
+    public RxWear(@NonNull Context context) {
+        this.context = context.getApplicationContext();
+
+        capability = new Capability(context);
+        channel = new Channel(context);
+        data = new Data(context);
+        message = new Message(this);
+        node = new Node(context);
     }
-
-    /* Set a default timeout for all requests to the Wearable API made in the lib.
-     * When a timeout occurs, onError() is called with a StatusException.
-     */
-    public void setDefaultTimeout(long time, @NonNull TimeUnit timeUnit) {
-        if(timeUnit != null) {
-            timeoutTime = time;
-            timeoutUnit = timeUnit;
-        } else {
-            throw new IllegalArgumentException("timeUnit parameter must not be null");
-        }
-    }
-
-    /* Reset the default timeout.
-     */
-    public void resetDefaultTimeout() {
-        timeoutTime = null;
-        timeoutUnit = null;
-    }
-
-
-    /* Can be used to check whether connection to Wearable API was successful.
-     *
-     * This Completable completes if the connection was successful.
-     */
-    public Completable checkConnection() {
-        return Completable.fromSingle(getWearableClient());
-    }
-
-    public Single<GoogleApiClient> getWearableClient() {
-        return GoogleAPIClientSingle.create(ctx, Wearable.API);
-    }
-
 
     public Capability capability() {
         return capability;

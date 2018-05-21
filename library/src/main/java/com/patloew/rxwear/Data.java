@@ -1,10 +1,11 @@
 package com.patloew.rxwear;
 
+import android.content.Context;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 
 import com.google.android.gms.wearable.Asset;
-import com.google.android.gms.wearable.DataApi;
+import com.google.android.gms.wearable.DataClient;
 import com.google.android.gms.wearable.DataEvent;
 import com.google.android.gms.wearable.DataItem;
 import com.google.android.gms.wearable.DataItemAsset;
@@ -16,7 +17,6 @@ import com.google.android.gms.wearable.PutDataRequest;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -33,13 +33,18 @@ import io.reactivex.Single;
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. */
+ * limitations under the License.
+ *
+ * FILE MODIFIED by Marek Wałach, 2018
+ *
+ *
+ */
 public class Data {
 
-    private final RxWear rxWear;
+    private final Context context;
 
-    Data(RxWear rxWear) {
-        this.rxWear = rxWear;
+    Data(Context context) {
+        this.context = context;
     }
 
 
@@ -50,143 +55,87 @@ public class Data {
     // listen
 
     public Observable<DataEvent> listen() {
-        return listenInternal(null, null, null, null);
-    }
-
-    public Observable<DataEvent> listen(long timeout, @NonNull TimeUnit timeUnit) {
-        return listenInternal(null, null, timeout, timeUnit);
+        return listenInternal(null, null);
     }
 
     public Observable<DataEvent> listen(@NonNull Uri uri, int filterType) {
-        return listenInternal(uri, filterType, null, null);
-    }
-
-    public Observable<DataEvent> listen(@NonNull Uri uri, int filterType, long timeout, @NonNull TimeUnit timeUnit) {
-        return listenInternal(uri, filterType, timeout, timeUnit);
+        return listenInternal(uri, filterType);
     }
 
     public Observable<DataEvent> listen(@NonNull String path, int filterType) {
-        return listenInternal(getUriBuilder().scheme(PutDataRequest.WEAR_URI_SCHEME).path(path).build(), filterType, null, null);
+        return listenInternal(getUriBuilder().scheme(PutDataRequest.WEAR_URI_SCHEME).path(path).build(), filterType);
     }
 
-    public Observable<DataEvent> listen(@NonNull String path, int filterType, long timeout, @NonNull TimeUnit timeUnit) {
-        return listenInternal(getUriBuilder().scheme(PutDataRequest.WEAR_URI_SCHEME).path(path).build(), filterType, timeout, timeUnit);
-    }
-
-    private Observable<DataEvent> listenInternal(Uri uri, Integer filterType, Long timeout, TimeUnit timeUnit) {
-        return Observable.create(new DataListenerObservable(rxWear, uri, filterType, timeout, timeUnit));
+    private Observable<DataEvent> listenInternal(Uri uri, Integer filterType) {
+        return Observable.create(new DataListenerObservable(context, uri, filterType));
     }
 
     // delete
 
     public Single<Integer> delete(@NonNull Uri uri) {
-        return deleteInternal(uri, null, null, null);
-    }
-
-    public Single<Integer> delete(@NonNull Uri uri, @NonNull Long timeout, @NonNull TimeUnit timeUnit) {
-        return deleteInternal(uri, null, timeout, timeUnit);
+        return deleteInternal(uri, null);
     }
 
     public Single<Integer> delete(@NonNull Uri uri, int filterType) {
-        return deleteInternal(uri, filterType, null, null);
+        return deleteInternal(uri, filterType);
     }
 
-    public Single<Integer> delete(@NonNull Uri uri, int filterType, long timeout, @NonNull TimeUnit timeUnit) {
-        return deleteInternal(uri, filterType, timeout, timeUnit);
-    }
-
-    private Single<Integer> deleteInternal(Uri uri, Integer filterType, Long timeout, TimeUnit timeUnit) {
-        return Single.create(new DataDeleteItemsSingle(rxWear, uri, filterType, timeout, timeUnit));
+    private Single<Integer> deleteInternal(Uri uri, Integer filterType) {
+        return Single.create(new DataDeleteItemsSingle(context, uri, filterType));
     }
 
     // put
 
     public Single<DataItem> put(@NonNull PutDataRequest putDataRequest) {
-        return putInternal(putDataRequest, null, null);
-    }
-
-    public Single<DataItem> put(@NonNull PutDataRequest putDataRequest, long timeout, @NonNull TimeUnit timeUnit) {
-        return putInternal(putDataRequest, timeout, timeUnit);
+        return putInternal(putDataRequest);
     }
 
     public Single<DataItem> put(@NonNull PutDataMapRequest putDataMapRequest) {
-        return putInternal(putDataMapRequest.asPutDataRequest(), null, null);
+        return putInternal(putDataMapRequest.asPutDataRequest());
     }
 
-    public Single<DataItem> put(@NonNull PutDataMapRequest putDataMapRequest, long timeout, @NonNull TimeUnit timeUnit) {
-        return putInternal(putDataMapRequest.asPutDataRequest(), timeout, timeUnit);
-    }
-
-    Single<DataItem> putInternal(PutDataRequest putDataRequest, Long timeout, TimeUnit timeUnit) {
-        return Single.create(new DataPutItemSingle(rxWear, putDataRequest, timeout, timeUnit));
+    Single<DataItem> putInternal(PutDataRequest putDataRequest) {
+        return Single.create(new DataPutItemSingle(context, putDataRequest));
     }
 
     // get
 
     public Observable<DataItem> get(@NonNull Uri uri, int filterType) {
-        return getInternal(uri, filterType, null, null);
-    }
-
-    public Observable<DataItem> get(@NonNull Uri uri, int filterType, long timeout, @NonNull TimeUnit timeUnit) {
-        return getInternal(uri, filterType, timeout, timeUnit);
+        return getInternal(uri, filterType);
     }
 
     public Observable<DataItem> get(@NonNull String path, int filterType) {
-        return getInternal(getUriBuilder().scheme(PutDataRequest.WEAR_URI_SCHEME).path(path).build(), filterType, null, null);
-    }
-
-    public Observable<DataItem> get(@NonNull String path, int filterType, long timeout, @NonNull TimeUnit timeUnit) {
-        return getInternal(getUriBuilder().scheme(PutDataRequest.WEAR_URI_SCHEME).path(path).build(), filterType, timeout, timeUnit);
+        return getInternal(getUriBuilder().scheme(PutDataRequest.WEAR_URI_SCHEME).path(path).build(), filterType);
     }
 
     public Observable<DataItem> get(@NonNull Uri uri) {
-        return getInternal(uri, null, null, null);
-    }
-
-    public Observable<DataItem> get(@NonNull Uri uri, long timeout, @NonNull TimeUnit timeUnit) {
-        return getInternal(uri, null, timeout, timeUnit);
+        return getInternal(uri, null);
     }
 
     public Observable<DataItem> get(@NonNull String path) {
-        return getInternal(getUriBuilder().scheme(PutDataRequest.WEAR_URI_SCHEME).path(path).build(), null, null, null);
-    }
-
-    public Observable<DataItem> get(@NonNull String path, long timeout, @NonNull TimeUnit timeUnit) {
-        return getInternal(getUriBuilder().scheme(PutDataRequest.WEAR_URI_SCHEME).path(path).build(), null, timeout, timeUnit);
+        return getInternal(getUriBuilder().scheme(PutDataRequest.WEAR_URI_SCHEME).path(path).build(), null);
     }
 
     public Observable<DataItem> get() {
-        return getInternal(null, null, null, null);
+        return getInternal(null, null);
     }
 
-    public Observable<DataItem> get(long timeout, @NonNull TimeUnit timeUnit) {
-        return getInternal(null, null, timeout, timeUnit);
-    }
-
-    private Observable<DataItem> getInternal(Uri uri, Integer filterType, Long timeout, TimeUnit timeUnit) {
-        return Observable.create(new DataGetItemsObservable(rxWear, uri, filterType, timeout, timeUnit));
+    private Observable<DataItem> getInternal(Uri uri, Integer filterType) {
+        return Observable.create(new DataGetItemsObservable(context, uri, filterType));
     }
 
     // getFdForAsset
 
-    public Single<DataApi.GetFdForAssetResult> getFdForAsset(@NonNull DataItemAsset dataItemAsset) {
-        return getFdForAssetInternal(dataItemAsset, null, null, null);
+    public Single<DataClient.GetFdForAssetResponse> getFdForAsset(@NonNull DataItemAsset dataItemAsset) {
+        return getFdForAssetInternal(dataItemAsset, null);
     }
 
-    public Single<DataApi.GetFdForAssetResult> getFdForAsset(@NonNull DataItemAsset dataItemAsset, long timeout, @NonNull TimeUnit timeUnit) {
-        return getFdForAssetInternal(dataItemAsset, null, timeout, timeUnit);
+    public Single<DataClient.GetFdForAssetResponse> getFdForAsset(@NonNull Asset asset) {
+        return getFdForAssetInternal(null, asset);
     }
 
-    public Single<DataApi.GetFdForAssetResult> getFdForAsset(@NonNull Asset asset) {
-        return getFdForAssetInternal(null, asset, null, null);
-    }
-
-    public Single<DataApi.GetFdForAssetResult> getFdForAsset(@NonNull Asset asset, long timeout, @NonNull TimeUnit timeUnit) {
-        return getFdForAssetInternal(null, asset, timeout, timeUnit);
-    }
-
-    private Single<DataApi.GetFdForAssetResult> getFdForAssetInternal(DataItemAsset dataItemAsset, Asset asset, Long timeout, TimeUnit timeUnit) {
-        return Single.create(new DataGetFdForAssetSingle(rxWear, dataItemAsset, asset, timeout, timeUnit));
+    private Single<DataClient.GetFdForAssetResponse> getFdForAssetInternal(DataItemAsset dataItemAsset, Asset asset) {
+        return Single.create(new DataGetFdForAssetSingle(context, dataItemAsset, asset));
     }
 
 
@@ -225,27 +174,33 @@ public class Data {
 
         public Single<DataItem> withDataItem(DataItem dataItem) {
             PutDataRequest request = PutDataRequest.createFromDataItem(dataItem);
-            if(urgent) { request.setUrgent(); }
+            if (urgent) {
+                request.setUrgent();
+            }
             return createPutSerializableSingle(request);
         }
 
         public Single<DataItem> withAutoAppendedId(String pathPrefix) {
             PutDataRequest request = PutDataRequest.createWithAutoAppendedId(pathPrefix);
-            if(urgent) { request.setUrgent(); }
+            if (urgent) {
+                request.setUrgent();
+            }
             return createPutSerializableSingle(request);
         }
 
         public Single<DataItem> to(String path) {
             PutDataRequest request = PutDataRequest.create(path);
-            if(urgent) { request.setUrgent(); }
+            if (urgent) {
+                request.setUrgent();
+            }
             return createPutSerializableSingle(request);
         }
 
         private Single<DataItem> createPutSerializableSingle(PutDataRequest request) {
             try {
                 request.setData(IOUtil.writeObjectToByteArray(serializable));
-                return putInternal(request, null, null);
-            } catch(IOException e) {
+                return putInternal(request);
+            } catch (IOException e) {
                 return Single.error(e);
             }
         }
@@ -265,7 +220,8 @@ public class Data {
      */
     public class PutDataMap {
 
-        PutDataMap() { }
+        PutDataMap() {
+        }
 
         boolean urgent = false;
 
@@ -292,15 +248,17 @@ public class Data {
         final PutDataMapRequest request;
 
         private RxFitPutDataMapRequest(String path, DataMapItem dataMapItem, String pathPrefix, boolean urgent) {
-            if(path != null) {
+            if (path != null) {
                 request = PutDataMapRequest.create(path);
-            } else if(dataMapItem != null) {
+            } else if (dataMapItem != null) {
                 request = PutDataMapRequest.createFromDataMapItem(dataMapItem);
             } else {
                 request = PutDataMapRequest.createWithAutoAppendedId(pathPrefix);
             }
 
-            if(urgent) { request.setUrgent(); }
+            if (urgent) {
+                request.setUrgent();
+            }
         }
 
         public RxFitPutDataMapRequest putAll(DataMap dataMap) {
@@ -389,11 +347,11 @@ public class Data {
         }
 
         public Single<DataItem> toSingle() {
-            return putInternal(request.asPutDataRequest(), null, null);
+            return putInternal(request.asPutDataRequest());
         }
 
         public Observable<DataItem> toObservable() {
-            return putInternal(request.asPutDataRequest(), null, null).toObservable();
+            return putInternal(request.asPutDataRequest()).toObservable();
         }
     }
 

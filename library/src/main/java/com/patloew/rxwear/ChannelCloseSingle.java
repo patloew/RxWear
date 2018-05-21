@@ -1,11 +1,10 @@
 package com.patloew.rxwear;
 
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
-import com.google.android.gms.wearable.Channel;
+import android.content.Context;
 
-import java.util.concurrent.TimeUnit;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.wearable.ChannelClient;
+import com.google.android.gms.wearable.Wearable;
 
 import io.reactivex.SingleEmitter;
 
@@ -21,26 +20,31 @@ import io.reactivex.SingleEmitter;
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. */
-class ChannelCloseSingle extends BaseSingle<Status> {
+ * limitations under the License.
+ *
+ * FILE MODIFIED by Marek Wałach, 2018
+ *
+ *
+ */
+class ChannelCloseSingle extends BaseSingle<Void> {
 
-    final Channel channel;
+    final ChannelClient.Channel channel;
     final Integer errorCode;
 
-    ChannelCloseSingle(RxWear rxWear, Channel channel, Integer errorCode, Long timeout, TimeUnit timeUnit) {
-        super(rxWear, timeout, timeUnit);
+    ChannelCloseSingle(Context context, ChannelClient.Channel channel, Integer errorCode) {
+        super(context);
         this.channel = channel;
         this.errorCode = errorCode;
     }
 
     @Override
-    protected void onGoogleApiClientReady(GoogleApiClient apiClient, final SingleEmitter<Status> emitter) {
-        ResultCallback<Status> resultCallBack = SingleResultCallBack.get(emitter);
+    void onSubscribe(SingleEmitter<Void> voidSingleEmitter) {
+        OnCompleteListener<Void> resultCallBack = SingleResultCallBack.get(voidSingleEmitter);
 
-        if(errorCode != null) {
-            setupWearPendingResult(channel.close(apiClient, errorCode), resultCallBack);
+        if (errorCode != null) {
+            setupWearTask(Wearable.getChannelClient(context).close(channel, errorCode), resultCallBack);
         } else {
-            setupWearPendingResult(channel.close(apiClient), resultCallBack);
+            setupWearTask(Wearable.getChannelClient(context).close(channel), resultCallBack);
         }
     }
 }

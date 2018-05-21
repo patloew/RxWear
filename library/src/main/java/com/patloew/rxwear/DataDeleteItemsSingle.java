@@ -1,13 +1,10 @@
 package com.patloew.rxwear;
 
+import android.content.Context;
 import android.net.Uri;
 
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.wearable.DataApi;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.wearable.Wearable;
-
-import java.util.concurrent.TimeUnit;
 
 import io.reactivex.SingleEmitter;
 
@@ -23,26 +20,31 @@ import io.reactivex.SingleEmitter;
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. */
+ * limitations under the License.
+ *
+ * FILE MODIFIED by Marek Wałach, 2018
+ *
+ *
+ */
 class DataDeleteItemsSingle extends BaseSingle<Integer> {
 
     final Uri uri;
     final Integer filterType;
 
-    DataDeleteItemsSingle(RxWear rxWear, Uri uri, Integer filterType, Long timeout, TimeUnit timeUnit) {
-        super(rxWear, timeout, timeUnit);
+    DataDeleteItemsSingle(Context context, Uri uri, Integer filterType) {
+        super(context);
         this.uri = uri;
         this.filterType = filterType;
     }
 
     @Override
-    protected void onGoogleApiClientReady(GoogleApiClient apiClient, final SingleEmitter<Integer> emitter) {
-        ResultCallback<DataApi.DeleteDataItemsResult> resultResultCallback = SingleResultCallBack.get(emitter, DataApi.DeleteDataItemsResult::getNumDeleted);
+    void onSubscribe(SingleEmitter<Integer> integerSingleEmitter) {
+        OnCompleteListener<Integer> resultResultCallback = SingleResultCallBack.get(integerSingleEmitter);
 
-        if(filterType == null) {
-            setupWearPendingResult(Wearable.DataApi.deleteDataItems(apiClient, uri), resultResultCallback);
+        if (filterType == null) {
+            setupWearTask(Wearable.getDataClient(context).deleteDataItems(uri), resultResultCallback);
         } else {
-            setupWearPendingResult(Wearable.DataApi.deleteDataItems(apiClient, uri, filterType), resultResultCallback);
+            setupWearTask(Wearable.getDataClient(context).deleteDataItems(uri, filterType), resultResultCallback);
         }
     }
 }

@@ -1,15 +1,12 @@
 package com.patloew.rxwear;
 
+import android.content.Context;
 import android.net.Uri;
 
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
-import com.google.android.gms.wearable.CapabilityApi;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.wearable.CapabilityClient;
 import com.google.android.gms.wearable.CapabilityInfo;
 import com.google.android.gms.wearable.Wearable;
-
-import java.util.concurrent.TimeUnit;
 
 import io.reactivex.ObservableEmitter;
 
@@ -25,42 +22,46 @@ import io.reactivex.ObservableEmitter;
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. */
+ * limitations under the License.
+ *
+ * FILE MODIFIED by Marek Wałach, 2018
+ *
+ *
+ */
 class CapabilityListenerObservable extends BaseObservable<CapabilityInfo> {
 
     final String capability;
     final Uri uri;
     final Integer filterType;
 
-    private CapabilityApi.CapabilityListener listener;
+    private CapabilityClient.OnCapabilityChangedListener listener;
 
-    CapabilityListenerObservable(RxWear rxWear, String capability, Uri uri, Integer filterType, Long timeout, TimeUnit timeUnit) {
-        super(rxWear, timeout, timeUnit);
+    CapabilityListenerObservable(Context context, String capability, Uri uri, Integer filterType) {
+        super(context);
         this.capability = capability;
         this.uri = uri;
         this.filterType = filterType;
     }
 
     @Override
-    protected void onGoogleApiClientReady(GoogleApiClient apiClient, final ObservableEmitter<CapabilityInfo> emitter) {
-        listener = emitter::onNext;
+    void onSubscribe(ObservableEmitter<CapabilityInfo> capabilityInfoObservableEmitter) {
+        listener = capabilityInfoObservableEmitter::onNext;
 
-        ResultCallback<Status> resultCallback = new StatusErrorResultCallBack(emitter);
+        OnCompleteListener<Void> resultCallback = new StatusErrorResultCallBack<>(capabilityInfoObservableEmitter);
 
-        if(capability != null) {
-            setupWearPendingResult(Wearable.CapabilityApi.addCapabilityListener(apiClient, listener, capability), resultCallback);
+        if (capability != null) {
+            setupWearTask(Wearable.getCapabilityClient(context).addListener(listener, capability), resultCallback);
         } else {
-            setupWearPendingResult(Wearable.CapabilityApi.addListener(apiClient, listener, uri, filterType), resultCallback);
+            setupWearTask(Wearable.getCapabilityClient(context).addListener(listener, uri, filterType), resultCallback);
         }
     }
 
-
     @Override
-    protected void onUnsubscribed(GoogleApiClient apiClient) {
-        if(capability != null) {
-            Wearable.CapabilityApi.removeCapabilityListener(apiClient, listener, capability);
+    void unSubscribe() {
+        if (capability != null) {
+            Wearable.getCapabilityClient(context).removeListener(listener, capability);
         } else {
-            Wearable.CapabilityApi.removeListener(apiClient, listener);
+            Wearable.getCapabilityClient(context).removeListener(listener);
         }
     }
 }

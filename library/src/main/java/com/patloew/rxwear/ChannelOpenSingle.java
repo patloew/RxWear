@@ -1,11 +1,11 @@
 package com.patloew.rxwear;
 
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.wearable.Channel;
+import android.content.Context;
+
+import com.google.android.gms.wearable.ChannelClient;
 import com.google.android.gms.wearable.Wearable;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 import io.reactivex.SingleEmitter;
 
@@ -21,33 +21,36 @@ import io.reactivex.SingleEmitter;
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. */
-class ChannelOpenSingle extends BaseSingle<Channel> {
+ * limitations under the License.
+ *
+ * FILE MODIFIED by Marek Wałach, 2018
+ *
+ *
+ */
+class ChannelOpenSingle extends BaseSingle<ChannelClient.Channel> {
 
     final String nodeId;
     final String path;
 
-    ChannelOpenSingle(RxWear rxWear, String nodeId, String path, Long timeout, TimeUnit timeUnit) {
-        super(rxWear, timeout, timeUnit);
+    ChannelOpenSingle(Context context, String nodeId, String path) {
+        super(context);
         this.nodeId = nodeId;
         this.path = path;
     }
 
     @Override
-    protected void onGoogleApiClientReady(GoogleApiClient apiClient, final SingleEmitter<Channel> emitter) {
-        setupWearPendingResult(
-                Wearable.ChannelApi.openChannel(apiClient, nodeId, path),
+    void onSubscribe(SingleEmitter<ChannelClient.Channel> channelSingleEmitter) {
+        setupWearTask(Wearable.getChannelClient(context).openChannel(nodeId, path),
                 openChannelResult -> {
-                    if (!openChannelResult.getStatus().isSuccess()) {
-                        emitter.onError(new StatusException(openChannelResult.getStatus()));
-                    } else {
-                        if(openChannelResult.getChannel() != null) {
-                            emitter.onSuccess(openChannelResult.getChannel());
+                    if (openChannelResult.isSuccessful()) {
+                        if (openChannelResult.getResult() != null) {
+                            channelSingleEmitter.onSuccess(openChannelResult.getResult());
                         } else {
-                            emitter.onError(new IOException("Channel connection could not be opened"));
+                            channelSingleEmitter.onError(new IOException("Channel connection could not be opened"));
                         }
+                    } else {
+                        channelSingleEmitter.onError(new StatusException(openChannelResult.getException()));
                     }
-                }
-        );
+                });
     }
 }

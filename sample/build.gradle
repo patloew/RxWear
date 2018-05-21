@@ -1,14 +1,13 @@
 apply plugin: 'com.android.application'
-apply plugin: 'me.tatarka.retrolambda'
 
 android {
-    compileSdkVersion 25
-    buildToolsVersion "25.0.0"
+    compileSdkVersion 27
+    buildToolsVersion "27.0.3"
 
     defaultConfig {
         applicationId "com.patloew.rxwearsample"
         minSdkVersion 14
-        targetSdkVersion 25
+        targetSdkVersion 27
         versionCode 1
         versionName "1.0.0"
     }
@@ -30,26 +29,23 @@ android {
     }
 }
 
-retrolambda {
-    javaVersion JavaVersion.VERSION_1_6
-}
-
 dependencies {
     wearApp project(':wearsample')
 
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-    testCompile 'junit:junit:4.12'
-    compile 'com.android.support:appcompat-v7:25.0.0'
-    compile "com.android.support:design:25.0.0"
-    compile "com.android.support:gridlayout-v7:25.0.0"
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    testImplementation'junit:junit:4.12'
+    implementation 'com.android.support:appcompat-v7:27.1.1'
+    implementation "com.android.support:design:27.1.1"
+    implementation "com.android.support:gridlayout-v7:27.1.1"
 
-    compile project(':library')
+    implementation project(':library')
     //compile 'com.patloew.rxwear:rxwear2:2.0.0'
 
-    compile 'io.reactivex.rxjava2:rxjava:2.0.0'
-    compile 'io.reactivex.rxjava2:rxandroid:2.0.0-RC1'
-    compile "com.github.akarnokd:rxjava2-interop:0.6.0"
-    compile 'com.jakewharton.rxbinding:rxbinding:0.4.0'
+    implementation 'io.reactivex.rxjava2:rxandroid:2.0.1'
+    implementation "com.github.akarnokd:rxjava2-interop:0.6.0"
+    implementation 'com.jakewharton.rxbinding:rxbinding:0.4.0'
 
-    compile 'com.google.android.gms:play-services-wearable:9.8.0'
+    implementation 'com.google.android.gms:play-services-wearable:15.0.1'
 }
+
+apply plugin: 'com.google.gms.google-services'

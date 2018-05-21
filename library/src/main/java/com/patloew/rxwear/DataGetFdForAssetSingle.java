@@ -1,13 +1,13 @@
 package com.patloew.rxwear;
 
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.ResultCallback;
+import android.content.Context;
+import android.support.annotation.NonNull;
+
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.wearable.Asset;
-import com.google.android.gms.wearable.DataApi;
+import com.google.android.gms.wearable.DataClient;
 import com.google.android.gms.wearable.DataItemAsset;
 import com.google.android.gms.wearable.Wearable;
-
-import java.util.concurrent.TimeUnit;
 
 import io.reactivex.SingleEmitter;
 
@@ -23,26 +23,31 @@ import io.reactivex.SingleEmitter;
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. */
-class DataGetFdForAssetSingle extends BaseSingle<DataApi.GetFdForAssetResult> {
+ * limitations under the License.
+ *
+ * FILE MODIFIED by Marek Wałach, 2018
+ *
+ *
+ */
+class DataGetFdForAssetSingle extends BaseSingle<DataClient.GetFdForAssetResponse> {
 
     final DataItemAsset dataItemAsset;
     final Asset asset;
 
-    DataGetFdForAssetSingle(RxWear rxWear, DataItemAsset dataItemAsset, Asset asset, Long timeout, TimeUnit timeUnit) {
-        super(rxWear, timeout, timeUnit);
+    DataGetFdForAssetSingle(@NonNull Context ctx, DataItemAsset dataItemAsset, Asset asset) {
+        super(ctx);
         this.dataItemAsset = dataItemAsset;
         this.asset = asset;
     }
 
     @Override
-    protected void onGoogleApiClientReady(GoogleApiClient apiClient, final SingleEmitter<DataApi.GetFdForAssetResult> emitter) {
-        ResultCallback<DataApi.GetFdForAssetResult> resultCallback = SingleResultCallBack.get(emitter);
+    void onSubscribe(SingleEmitter<DataClient.GetFdForAssetResponse> getFdForAssetResponseSingleEmitter) {
+        OnCompleteListener<DataClient.GetFdForAssetResponse> resultCallback = SingleResultCallBack.get(getFdForAssetResponseSingleEmitter);
 
-        if(asset != null) {
-            setupWearPendingResult(Wearable.DataApi.getFdForAsset(apiClient, asset), resultCallback);
+        if (asset != null) {
+            setupWearTask(Wearable.getDataClient(context).getFdForAsset(asset), resultCallback);
         } else {
-            setupWearPendingResult(Wearable.DataApi.getFdForAsset(apiClient, dataItemAsset), resultCallback);
+            setupWearTask(Wearable.getDataClient(context).getFdForAsset(dataItemAsset), resultCallback);
         }
     }
 }

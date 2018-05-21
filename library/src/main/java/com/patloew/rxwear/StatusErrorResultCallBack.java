@@ -2,8 +2,8 @@ package com.patloew.rxwear;
 
 import android.support.annotation.NonNull;
 
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 
 import io.reactivex.ObservableEmitter;
 
@@ -19,8 +19,13 @@ import io.reactivex.ObservableEmitter;
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. */
-class StatusErrorResultCallBack implements ResultCallback<Status> {
+ * limitations under the License.
+ *
+ * FILE MODIFIED by Marek Wałach, 2018
+ *
+ *
+ */
+class StatusErrorResultCallBack<T> implements OnCompleteListener<T> {
 
     private final ObservableEmitter emitter;
 
@@ -29,9 +34,9 @@ class StatusErrorResultCallBack implements ResultCallback<Status> {
     }
 
     @Override
-    public void onResult(@NonNull Status status) {
-        if (!status.isSuccess()) {
-            emitter.onError(new StatusException(status));
+    public void onComplete(@NonNull Task<T> task) {
+        if (!task.isSuccessful()) {
+            emitter.onError(new StatusException(task.getException()));
         }
     }
 }

@@ -1,10 +1,9 @@
 package com.patloew.rxwear;
 
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.wearable.MessageApi;
-import com.google.android.gms.wearable.Wearable;
+import android.content.Context;
+import android.support.annotation.NonNull;
 
-import java.util.concurrent.TimeUnit;
+import com.google.android.gms.wearable.Wearable;
 
 import io.reactivex.SingleEmitter;
 
@@ -20,25 +19,30 @@ import io.reactivex.SingleEmitter;
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. */
+ * limitations under the License.
+ *
+ * FILE MODIFIED by Marek Wałach, 2018
+ *
+ *
+ */
 class MessageSendSingle extends BaseSingle<Integer> {
 
     final String nodeId;
     final String path;
     final byte[] data;
 
-    MessageSendSingle(RxWear rxWear, String nodeId, String path, byte[] data, Long timeout, TimeUnit timeUnit) {
-        super(rxWear, timeout, timeUnit);
+    MessageSendSingle(@NonNull Context context, String nodeId, String path, byte[] data) {
+        super(context);
         this.nodeId = nodeId;
         this.path = path;
         this.data = data;
     }
 
     @Override
-    protected void onGoogleApiClientReady(GoogleApiClient apiClient, final SingleEmitter<Integer> emitter) {
-        setupWearPendingResult(
-                Wearable.MessageApi.sendMessage(apiClient, nodeId, path, data),
-                SingleResultCallBack.get(emitter, MessageApi.SendMessageResult::getRequestId)
+    void onSubscribe(SingleEmitter<Integer> integerSingleEmitter) {
+        setupWearTask(
+                Wearable.getMessageClient(context).sendMessage(nodeId, path, data),
+                SingleResultCallBack.get(integerSingleEmitter)
         );
     }
 }

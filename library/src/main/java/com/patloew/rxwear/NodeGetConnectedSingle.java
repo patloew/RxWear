@@ -1,12 +1,12 @@
 package com.patloew.rxwear;
 
-import com.google.android.gms.common.api.GoogleApiClient;
+import android.content.Context;
+import android.support.annotation.NonNull;
+
 import com.google.android.gms.wearable.Node;
-import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.Wearable;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import io.reactivex.SingleEmitter;
 
@@ -22,18 +22,23 @@ import io.reactivex.SingleEmitter;
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. */
+ * limitations under the License.
+ *
+ * FILE MODIFIED by Marek Wałach, 2018
+ *
+ *
+ */
 class NodeGetConnectedSingle extends BaseSingle<List<Node>> {
 
-    NodeGetConnectedSingle(RxWear rxWear, Long timeout, TimeUnit timeUnit) {
-        super(rxWear, timeout, timeUnit);
+    NodeGetConnectedSingle(@NonNull Context context) {
+        super(context);
     }
 
     @Override
-    protected void onGoogleApiClientReady(GoogleApiClient apiClient, final SingleEmitter<List<Node>> emitter) {
-        setupWearPendingResult(
-                Wearable.NodeApi.getConnectedNodes(apiClient),
-                SingleResultCallBack.get(emitter, NodeApi.GetConnectedNodesResult::getNodes)
+    void onSubscribe(SingleEmitter<List<Node>> listSingleEmitter) {
+        setupWearTask(
+                Wearable.getNodeClient(context).getConnectedNodes(),
+                SingleResultCallBack.get(listSingleEmitter)
         );
     }
 }

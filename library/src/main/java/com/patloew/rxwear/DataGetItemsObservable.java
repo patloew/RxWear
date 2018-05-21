@@ -1,14 +1,13 @@
 package com.patloew.rxwear;
 
+import android.content.Context;
 import android.net.Uri;
+import android.support.annotation.NonNull;
 
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.wearable.DataItem;
 import com.google.android.gms.wearable.DataItemBuffer;
 import com.google.android.gms.wearable.Wearable;
-
-import java.util.concurrent.TimeUnit;
 
 import io.reactivex.ObservableEmitter;
 
@@ -24,46 +23,51 @@ import io.reactivex.ObservableEmitter;
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. */
+ * limitations under the License.
+ *
+ * FILE MODIFIED by Marek Wałach, 2018
+ *
+ *
+ */
 class DataGetItemsObservable extends BaseObservable<DataItem> {
 
     final Uri uri;
     final Integer filterType;
 
-    DataGetItemsObservable(RxWear rxWear, Uri uri, Integer filterType, Long timeout, TimeUnit timeUnit) {
-        super(rxWear, timeout, timeUnit);
+    DataGetItemsObservable(@NonNull Context context, Uri uri, Integer filterType) {
+        super(context);
         this.uri = uri;
         this.filterType = filterType;
     }
 
     @Override
-    protected void onGoogleApiClientReady(GoogleApiClient apiClient, final ObservableEmitter<DataItem> emitter) {
-        ResultCallback<DataItemBuffer> resultCallback = dataItemBuffer -> {
+    void onSubscribe(ObservableEmitter<DataItem> dataItemObservableEmitter) {
+        OnCompleteListener<DataItemBuffer> resultCallback = dataItemBuffer -> {
             try {
-                if(!dataItemBuffer.getStatus().isSuccess()) {
-                    emitter.onError(new StatusException(dataItemBuffer.getStatus()));
+                if (!dataItemBuffer.isSuccessful()) {
+                    dataItemObservableEmitter.onError(new StatusException(dataItemBuffer.getException()));
                 } else {
-                    for (int i = 0; i < dataItemBuffer.getCount(); i++) {
-                        if(emitter.isDisposed()) { break; }
-                        emitter.onNext(dataItemBuffer.get(i).freeze());
+                    for (int i = 0; i < dataItemBuffer.getResult().getCount(); i++) {
+                        if (dataItemObservableEmitter.isDisposed()) {
+                            break;
+                        }
+                        dataItemObservableEmitter.onNext(dataItemBuffer.getResult().get(i).freeze());
                     }
 
-                    emitter.onComplete();
+                    dataItemObservableEmitter.onComplete();
                 }
-            } catch(Throwable throwable) {
-                emitter.onError(throwable);
-            } finally {
-                dataItemBuffer.release();
+            } catch (Throwable throwable) {
+                dataItemObservableEmitter.onError(throwable);
             }
         };
 
-        if(uri == null) {
-            setupWearPendingResult(Wearable.DataApi.getDataItems(apiClient), resultCallback);
+        if (uri == null) {
+            setupWearTask(Wearable.getDataClient(context).getDataItems(), resultCallback);
         } else {
-            if(filterType == null) {
-                setupWearPendingResult(Wearable.DataApi.getDataItems(apiClient, uri), resultCallback);
+            if (filterType == null) {
+                setupWearTask(Wearable.getDataClient(context).getDataItems(uri), resultCallback);
             } else {
-                setupWearPendingResult(Wearable.DataApi.getDataItems(apiClient, uri, filterType), resultCallback);
+                setupWearTask(Wearable.getDataClient(context).getDataItems(uri, filterType), resultCallback);
             }
         }
     }

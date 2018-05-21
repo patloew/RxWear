@@ -10,7 +10,6 @@ import com.google.android.gms.wearable.PutDataRequest;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -27,7 +26,12 @@ import io.reactivex.Single;
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. */
+ * limitations under the License.
+ *
+ * FILE MODIFIED by Marek Wałach, 2018
+ *
+ *
+ */
 public class Message {
 
     private final RxWear rxWear;
@@ -43,60 +47,40 @@ public class Message {
     // listen
 
     public Observable<MessageEvent> listen() {
-        return listenInternal(null, null, null, null);
-    }
-
-    public Observable<MessageEvent> listen(@NonNull Long timeout, @NonNull TimeUnit timeUnit) {
-        return listenInternal(null, null, timeout, timeUnit);
+        return listenInternal(null, null);
     }
 
     public Observable<MessageEvent> listen(@NonNull Uri uri, int filterType) {
-        return listenInternal(uri, filterType, null, null);
-    }
-
-    public Observable<MessageEvent> listen(@NonNull Uri uri, int filterType, long timeout, @NonNull TimeUnit timeUnit) {
-        return listenInternal(uri, filterType, timeout, timeUnit);
+        return listenInternal(uri, filterType);
     }
 
     public Observable<MessageEvent> listen(@NonNull String path, int filterType) {
-        return listenInternal(getUriBuilder().scheme(PutDataRequest.WEAR_URI_SCHEME).path(path).build(), filterType, null, null);
+        return listenInternal(getUriBuilder().scheme(PutDataRequest.WEAR_URI_SCHEME).path(path).build(), filterType);
     }
 
-    public Observable<MessageEvent> listen(@NonNull String path, int filterType, long timeout, @NonNull TimeUnit timeUnit) {
-        return listenInternal(getUriBuilder().scheme(PutDataRequest.WEAR_URI_SCHEME).path(path).build(), filterType, timeout, timeUnit);
-    }
-
-    private Observable<MessageEvent> listenInternal(Uri uri, Integer filterType, Long timeout, TimeUnit timeUnit) {
-        return Observable.create(new MessageListenerObservable(rxWear, uri, filterType, timeout, timeUnit));
+    private Observable<MessageEvent> listenInternal(Uri uri, Integer filterType) {
+        return Observable.create(new MessageListenerObservable(rxWear.context, uri, filterType));
     }
 
     // send
 
     public Single<Integer> send(@NonNull String nodeId, @NonNull String path, @NonNull byte[] data) {
-        return sendInternal(nodeId, path, data, null, null);
+        return sendInternal(nodeId, path, data);
     }
 
-    public Single<Integer> send(@NonNull String nodeId, @NonNull String path, @NonNull byte[] data, long timeout, @NonNull TimeUnit timeUnit) {
-        return sendInternal(nodeId, path, data, timeout, timeUnit);
-    }
-
-    Single<Integer> sendInternal(String nodeId, String path, byte[] data, Long timeout, TimeUnit timeUnit) {
-        return Single.create(new MessageSendSingle(rxWear, nodeId, path, data, timeout, timeUnit));
+    Single<Integer> sendInternal(String nodeId, String path, byte[] data) {
+        return Single.create(new MessageSendSingle(rxWear.context, nodeId, path, data));
     }
 
     // sendToAllRemoteNodes
 
     public Observable<Integer> sendToAllRemoteNodes(@NonNull final String path, @NonNull final byte[] data) {
-        return sendToAllRemoteNodesInternal(path, data, null, null);
+        return sendToAllRemoteNodesInternal(path, data);
     }
 
-    public Observable<Integer> sendToAllRemoteNodes(@NonNull final String path, @NonNull final byte[] data, final long timeout, @NonNull final TimeUnit timeUnit) {
-        return sendToAllRemoteNodesInternal(path, data, timeout, timeUnit);
-    }
-
-    Observable<Integer> sendToAllRemoteNodesInternal(final String path, final byte[] data, final Long timeout, final TimeUnit timeUnit) {
-        return rxWear.node().getConnectedNodesInternal(timeout, timeUnit)
-                .flatMap(node -> sendInternal(node.getId(), path, data, timeout, timeUnit).toObservable());
+    Observable<Integer> sendToAllRemoteNodesInternal(final String path, final byte[] data) {
+        return rxWear.node().getConnectedNodesInternal()
+                .flatMap(node -> sendInternal(node.getId(), path, data).toObservable());
     }
 
     // Helper Methods
@@ -111,16 +95,16 @@ public class Message {
 
     public Single<Integer> sendSerializable(String nodeId, String path, Serializable serializable) {
         try {
-            return sendInternal(nodeId, path, IOUtil.writeObjectToByteArray(serializable), null, null);
-        } catch(Throwable throwable) {
+            return sendInternal(nodeId, path, IOUtil.writeObjectToByteArray(serializable));
+        } catch (Throwable throwable) {
             return Single.error(throwable);
         }
     }
 
     public Observable<Integer> sendSerializableToAllRemoteNodes(String path, Serializable serializable) {
         try {
-            return sendToAllRemoteNodesInternal(path, IOUtil.writeObjectToByteArray(serializable), null, null);
-        } catch(Throwable throwable) {
+            return sendToAllRemoteNodesInternal(path, IOUtil.writeObjectToByteArray(serializable));
+        } catch (Throwable throwable) {
             return Observable.error(throwable);
         }
     }
@@ -235,10 +219,10 @@ public class Message {
         }
 
         public Observable<Integer> toObservable() {
-            if(toAllRemoteNodes) {
-                return sendToAllRemoteNodesInternal(path, dataMap.toByteArray(), null, null);
+            if (toAllRemoteNodes) {
+                return sendToAllRemoteNodesInternal(path, dataMap.toByteArray());
             } else {
-                return sendInternal(nodeId, path, dataMap.toByteArray(), null, null).toObservable();
+                return sendInternal(nodeId, path, dataMap.toByteArray()).toObservable();
             }
         }
 
@@ -248,10 +232,10 @@ public class Message {
          * node is connected).
          */
         public Single<Integer> toSingle() {
-            if(toAllRemoteNodes) {
+            if (toAllRemoteNodes) {
                 return Single.error(new UnsupportedOperationException("toSingle() can not be used with toAllRemoteNodes()"));
             } else {
-                return sendInternal(nodeId, path, dataMap.toByteArray(), null, null);
+                return sendInternal(nodeId, path, dataMap.toByteArray());
             }
         }
     }

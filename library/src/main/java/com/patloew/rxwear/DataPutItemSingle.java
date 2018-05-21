@@ -1,12 +1,11 @@
 package com.patloew.rxwear;
 
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.wearable.DataApi;
+import android.content.Context;
+import android.support.annotation.NonNull;
+
 import com.google.android.gms.wearable.DataItem;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
-
-import java.util.concurrent.TimeUnit;
 
 import io.reactivex.SingleEmitter;
 
@@ -22,21 +21,26 @@ import io.reactivex.SingleEmitter;
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. */
+ * limitations under the License.
+ *
+ * FILE MODIFIED by Marek Wałach, 2018
+ *
+ *
+ */
 class DataPutItemSingle extends BaseSingle<DataItem> {
 
     final PutDataRequest putDataRequest;
 
-    DataPutItemSingle(RxWear rxWear, PutDataRequest putDataRequest, Long timeout, TimeUnit timeUnit) {
-        super(rxWear, timeout, timeUnit);
+    DataPutItemSingle(@NonNull Context ctx, PutDataRequest putDataRequest) {
+        super(ctx);
         this.putDataRequest = putDataRequest;
     }
 
     @Override
-    protected void onGoogleApiClientReady(GoogleApiClient apiClient, final SingleEmitter<DataItem> emitter) {
-        setupWearPendingResult(
-                Wearable.DataApi.putDataItem(apiClient, putDataRequest),
-                SingleResultCallBack.get(emitter, DataApi.DataItemResult::getDataItem)
+    void onSubscribe(SingleEmitter<DataItem> dataItemSingleEmitter) {
+        setupWearTask(
+                Wearable.getDataClient(context).putDataItem(putDataRequest),
+                SingleResultCallBack.get(dataItemSingleEmitter)
         );
     }
 }

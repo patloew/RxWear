@@ -1,10 +1,6 @@
 package com.patloew.rxwear;
 
-import android.support.annotation.NonNull;
-
-import com.patloew.rxwear.events.NodeEvent;
-
-import java.util.concurrent.TimeUnit;
+import android.content.Context;
 
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -21,58 +17,39 @@ import io.reactivex.Single;
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. */
+ * limitations under the License.
+ *
+ * FILE MODIFIED by Marek Wałach, 2018
+ *
+ *
+ */
 public class Node {
 
-    private final RxWear rxWear;
+    private final Context context;
 
-    Node(RxWear rxWear) {
-        this.rxWear = rxWear;
-    }
-
-    // listen
-
-    @Deprecated
-    public Observable<NodeEvent> listen() {
-        return listenInternal(null, null);
-    }
-
-    @Deprecated
-    public Observable<NodeEvent> listen(long timeout, @NonNull TimeUnit timeUnit) {
-        return listenInternal(timeout, timeUnit);
-    }
-
-    private Observable<NodeEvent> listenInternal(Long timeout, TimeUnit timeUnit) {
-        return Observable.create(new NodeListenerObservable(rxWear, timeout, timeUnit));
+    Node(Context context) {
+        this.context = context;
     }
 
     // getConnectedNodes
 
     public Observable<com.google.android.gms.wearable.Node> getConnectedNodes() {
-        return getConnectedNodesInternal(null, null);
+        return getConnectedNodesInternal();
     }
 
-    public Observable<com.google.android.gms.wearable.Node> getConnectedNodes(long timeout, @NonNull TimeUnit timeUnit) {
-        return getConnectedNodesInternal(timeout, timeUnit);
-    }
-
-    Observable<com.google.android.gms.wearable.Node> getConnectedNodesInternal(Long timeout, TimeUnit timeUnit) {
-        return Single.create(new NodeGetConnectedSingle(rxWear, timeout, timeUnit))
+    Observable<com.google.android.gms.wearable.Node> getConnectedNodesInternal() {
+        return Single.create(new NodeGetConnectedSingle(context))
                 .flatMapObservable(Observable::fromIterable);
     }
 
     // getLocalNode
 
     public Single<com.google.android.gms.wearable.Node> getLocalNode() {
-        return getLocalNodeInternal(null, null);
+        return getLocalNodeInternal();
     }
 
-    public Single<com.google.android.gms.wearable.Node> getLocalNode(long timeout, @NonNull TimeUnit timeUnit) {
-        return getLocalNodeInternal(timeout, timeUnit);
-    }
-
-    private Single<com.google.android.gms.wearable.Node> getLocalNodeInternal(Long timeout, TimeUnit timeUnit) {
-        return Single.create(new NodeGetLocalSingle(rxWear, timeout, timeUnit));
+    private Single<com.google.android.gms.wearable.Node> getLocalNodeInternal() {
+        return Single.create(new NodeGetLocalSingle(context));
     }
 
 }

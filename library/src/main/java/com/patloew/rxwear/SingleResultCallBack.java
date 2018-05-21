@@ -2,8 +2,8 @@ package com.patloew.rxwear;
 
 import android.support.annotation.NonNull;
 
-import com.google.android.gms.common.api.Result;
-import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 
 import io.reactivex.SingleEmitter;
 import io.reactivex.functions.Function;
@@ -20,17 +20,22 @@ import io.reactivex.functions.Function;
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. */
-class SingleResultCallBack<T extends Result, R> implements ResultCallback<T> {
+ * limitations under the License.
+ *
+ * FILE MODIFIED by Marek Wałach, 2018
+ *
+ *
+ */
+class SingleResultCallBack<T, R> implements OnCompleteListener<T> {
 
     private final SingleEmitter<? super R> emitter;
     private final Function<T, R> mapper;
 
-    static <T extends Result, R> ResultCallback<T> get(@NonNull SingleEmitter<R> subscriber, @NonNull Function<T, R> mapper) {
+    static <T, R> OnCompleteListener<T> get(@NonNull SingleEmitter<R> subscriber, @NonNull Function<T, R> mapper) {
         return new SingleResultCallBack<>(subscriber, mapper);
     }
 
-    static <T extends Result> ResultCallback<T> get(@NonNull SingleEmitter<T> subscriber) {
+    static <T> OnCompleteListener<T> get(@NonNull SingleEmitter<T> subscriber) {
         return new SingleResultCallBack<>(subscriber, input -> input);
     }
 
@@ -40,12 +45,12 @@ class SingleResultCallBack<T extends Result, R> implements ResultCallback<T> {
     }
 
     @Override
-    public void onResult(@NonNull T result) {
-        if (!result.getStatus().isSuccess()) {
-            emitter.onError(new StatusException(result.getStatus()));
+    public void onComplete(@NonNull Task<T> task) {
+        if (!task.isSuccessful()) {
+            emitter.onError(new StatusException(task.getException()));
         } else {
             try {
-                emitter.onSuccess(mapper.apply(result));
+                emitter.onSuccess(mapper.apply(task.getResult()));
             } catch (Exception e) {
                 emitter.onError(e);
             }

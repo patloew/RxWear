@@ -1,12 +1,10 @@
 package com.patloew.rxwear;
 
+import android.content.Context;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 
-import com.google.android.gms.common.api.Status;
 import com.google.android.gms.wearable.CapabilityInfo;
-
-import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -23,91 +21,72 @@ import io.reactivex.Single;
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. */
+ * limitations under the License.
+ *
+ * FILE MODIFIED by Marek Wałach, 2018
+ *
+ *
+ */
 public class Capability {
 
-    private final RxWear rxWear;
+    private final Context context;
 
-    Capability(RxWear rxWear) {
-        this.rxWear = rxWear;
+    Capability(Context context) {
+        this.context = context;
     }
 
     // listen
 
     public Observable<CapabilityInfo> listen(@NonNull String capability) {
-        return listenInternal(capability, null, null, null, null);
-    }
-
-    public Observable<CapabilityInfo> listen(@NonNull String capability, long timeout, @NonNull TimeUnit timeUnit) {
-        return listenInternal(capability, null, null, timeout, timeUnit);
+        return listenInternal(capability, null, null);
     }
 
     public Observable<CapabilityInfo> listen(@NonNull Uri uri, int filterType) {
-        return listenInternal(null, uri, filterType, null, null);
+        return listenInternal(null, uri, filterType);
     }
 
-    public Observable<CapabilityInfo> listen(@NonNull Uri uri, int filterType, long timeout, @NonNull TimeUnit timeUnit) {
-        return listenInternal(null, uri, filterType, timeout, timeUnit);
-    }
-
-    private Observable<CapabilityInfo> listenInternal(String capability, Uri uri, Integer filterType, Long timeout, TimeUnit timeUnit) {
-        return Observable.create(new CapabilityListenerObservable(rxWear, capability, uri, filterType, timeout, timeUnit));
+    private Observable<CapabilityInfo> listenInternal(String capability, Uri uri, Integer filterType) {
+        return Observable.create(new CapabilityListenerObservable(context, capability, uri, filterType));
     }
 
     // getAll
 
     public Observable<CapabilityInfo> getAll(int nodeFilter) {
-        return getAllInternal(nodeFilter, null, null);
+        return getAllInternal(nodeFilter);
     }
 
-    public Observable<CapabilityInfo> getAll(int nodeFilter, long timeout, @NonNull TimeUnit timeUnit) {
-        return getAllInternal(nodeFilter, timeout, timeUnit);
-    }
-
-    private Observable<CapabilityInfo> getAllInternal(int nodeFilter, Long timeout, TimeUnit timeUnit) {
-        return Single.create(new CapabilityGetAllSingle(rxWear, nodeFilter, timeout, timeUnit))
+    private Observable<CapabilityInfo> getAllInternal(int nodeFilter) {
+        return Single.create(new CapabilityGetAllSingle(context, nodeFilter))
                 .flatMapObservable(capabilityInfoMap -> Observable.fromIterable(capabilityInfoMap.values()));
     }
 
     // get
 
     public Single<CapabilityInfo> get(@NonNull String capability, int nodeFilter) {
-        return getInternal(capability, nodeFilter, null, null);
+        return getInternal(capability, nodeFilter);
     }
 
-    public Single<CapabilityInfo> get(@NonNull String capability, int nodeFilter, long timeout, @NonNull TimeUnit timeUnit) {
-        return getInternal(capability, nodeFilter, timeout, timeUnit);
-    }
-
-    private Single<CapabilityInfo> getInternal(String capability, int nodeFilter, Long timeout, TimeUnit timeUnit) {
-        return Single.create(new CapabilityGetSingle(rxWear, capability, nodeFilter, timeout, timeUnit));
+    private Single<CapabilityInfo> getInternal(String capability, int nodeFilter) {
+        return Single.create(new CapabilityGetSingle(context, capability, nodeFilter));
     }
 
     // addLocal
 
-    public Single<Status> addLocal(@NonNull String capability) {
-        return addLocalInternal(capability, null, null);
+    public Single<Void> addLocal(@NonNull String capability) {
+        return addLocalInternal(capability);
     }
 
-    public Single<Status> addLocal(@NonNull String capability, long timeout, @NonNull TimeUnit timeUnit) {
-        return addLocalInternal(capability, timeout, timeUnit);
-    }
-
-    private Single<Status> addLocalInternal(String capability, Long timeout, TimeUnit timeUnit) {
-        return Single.create(new CapabilityAddLocalSingle(rxWear, capability, timeout, timeUnit));
+    private Single<Void> addLocalInternal(String capability) {
+        return Single.create(new CapabilityAddLocalSingle(context, capability));
     }
 
     // removeLocal
 
-    public Single<Status> removeLocal(@NonNull String capability) {
-        return removeLocalInternal(capability, null, null);
+    public Single<Void> removeLocal(@NonNull String capability) {
+        return removeLocalInternal(capability);
     }
 
-    public Single<Status> removeLocal(@NonNull String capability, long timeout, @NonNull TimeUnit timeUnit) {
-        return removeLocalInternal(capability, timeout, timeUnit);
-    }
-
-    private Single<Status> removeLocalInternal(String capability, Long timeout, TimeUnit timeUnit) {
-        return Single.create(new CapabilityRemoveLocalSingle(rxWear, capability, timeout, timeUnit));
+    private Single<Void> removeLocalInternal(String capability) {
+        return Single.create(new CapabilityRemoveLocalSingle(context, capability));
     }
 }

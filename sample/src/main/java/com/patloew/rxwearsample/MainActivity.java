@@ -12,7 +12,6 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import com.jakewharton.rxbinding.view.RxView;
-import com.patloew.rxwear.GoogleAPIConnectionException;
 import com.patloew.rxwear.RxWear;
 import com.patloew.rxwear.transformers.DataItemGetDataMap;
 
@@ -60,11 +59,6 @@ public class MainActivity extends AppCompatActivity {
                         throwable -> {
                             Log.e("MainActivity", "Error on sending message", throwable);
 
-                            if(throwable instanceof GoogleAPIConnectionException) {
-                                Snackbar.make(coordinatorLayout, "Android Wear app is not installed", Snackbar.LENGTH_LONG).show();
-                            } else {
-                                Snackbar.make(coordinatorLayout, "Could not send message", Snackbar.LENGTH_LONG).show();
-                            }
                         })
         );
 
@@ -75,11 +69,6 @@ public class MainActivity extends AppCompatActivity {
                         throwable -> {
                             Log.e("MainActivity", "Error on setting persistent text", throwable);
 
-                            if(throwable instanceof GoogleAPIConnectionException) {
-                                Snackbar.make(coordinatorLayout, "Android Wear app is not installed", Snackbar.LENGTH_LONG).show();
-                            } else {
-                                Snackbar.make(coordinatorLayout, "Could not set persistent text", Snackbar.LENGTH_LONG).show();
-                            }
                         }));
 
         subscription.add(rxWear.data().get("/persistentText")

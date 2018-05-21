@@ -1,10 +1,11 @@
 package com.patloew.rxwear;
 
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.wearable.Channel;
+import android.content.Context;
+
+import com.google.android.gms.wearable.ChannelClient;
+import com.google.android.gms.wearable.Wearable;
 
 import java.io.InputStream;
-import java.util.concurrent.TimeUnit;
 
 import io.reactivex.SingleEmitter;
 
@@ -20,21 +21,26 @@ import io.reactivex.SingleEmitter;
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. */
+ * limitations under the License.
+ *
+ * FILE MODIFIED by Marek Wałach, 2018
+ *
+ *
+ */
 class ChannelGetInputStreamSingle extends BaseSingle<InputStream> {
 
-    final Channel channel;
+    final ChannelClient.Channel channel;
 
-    ChannelGetInputStreamSingle(RxWear rxWear, Channel channel, Long timeout, TimeUnit timeUnit) {
-        super(rxWear, timeout, timeUnit);
+    ChannelGetInputStreamSingle(Context context, ChannelClient.Channel channel) {
+        super(context);
         this.channel = channel;
     }
 
     @Override
-    protected void onGoogleApiClientReady(GoogleApiClient apiClient, final SingleEmitter<InputStream> emitter) {
-        setupWearPendingResult(
-                channel.getInputStream(apiClient),
-                SingleResultCallBack.get(emitter, Channel.GetInputStreamResult::getInputStream)
+    void onSubscribe(SingleEmitter<InputStream> inputStreamSingleEmitter) {
+        setupWearTask(
+                Wearable.getChannelClient(context).getInputStream(channel),
+                SingleResultCallBack.get(inputStreamSingleEmitter)
         );
     }
 }

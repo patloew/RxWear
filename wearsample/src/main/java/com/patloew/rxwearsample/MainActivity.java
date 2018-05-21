@@ -1,8 +1,8 @@
 package com.patloew.rxwearsample;
 
 import android.os.Bundle;
+import android.support.wear.widget.BoxInsetLayout;
 import android.support.wearable.activity.WearableActivity;
-import android.support.wearable.view.BoxInsetLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 

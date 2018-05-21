@@ -1,14 +1,14 @@
 package com.patloew.rxwear;
 
+import android.content.Context;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 
-import com.google.android.gms.common.api.Status;
+import com.google.android.gms.wearable.ChannelClient;
 import com.patloew.rxwear.events.ChannelEvent;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -25,134 +25,98 @@ import io.reactivex.Single;
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. */
+ * limitations under the License.
+ *
+ * FILE MODIFIED by Marek Wałach, 2018
+ *
+ *
+ */
 public class Channel {
 
-    private final RxWear rxWear;
+    private final Context context;
 
-    Channel(RxWear rxWear) {
-        this.rxWear = rxWear;
+    Channel(Context context) {
+        this.context = context;
     }
 
     // listen
 
     public Observable<ChannelEvent> listen() {
-        return listenInternal(null, null, null);
+        return listenInternal(null);
     }
 
-    public Observable<ChannelEvent> listen(long timeout, @NonNull TimeUnit timeUnit) {
-        return listenInternal(null, timeout, timeUnit);
+    public Observable<ChannelEvent> listen(@NonNull ChannelClient.Channel channel) {
+        return listenInternal(channel);
     }
 
-    public Observable<ChannelEvent> listen(@NonNull com.google.android.gms.wearable.Channel channel) {
-        return listenInternal(channel, null, null);
-    }
-
-    public Observable<ChannelEvent> listen(@NonNull com.google.android.gms.wearable.Channel channel, long timeout, @NonNull TimeUnit timeUnit) {
-        return listenInternal(channel, timeout, timeUnit);
-    }
-
-    private Observable<ChannelEvent> listenInternal(com.google.android.gms.wearable.Channel channel, Long timeout, TimeUnit timeUnit) {
-        return Observable.create(new ChannelListenerObservable(rxWear, channel, timeout, timeUnit));
+    private Observable<ChannelEvent> listenInternal(ChannelClient.Channel channel) {
+        return Observable.create(new ChannelListenerObservable(context, channel));
     }
 
     // close
-
-    public Single<Status> close(@NonNull com.google.android.gms.wearable.Channel channel) {
-        return closeInternal(channel, null, null, null);
+    public Single<Void> close(@NonNull ChannelClient.Channel channel) {
+        return closeInternal(channel, null);
     }
 
-    public Single<Status> close(@NonNull com.google.android.gms.wearable.Channel channel, long timeout, @NonNull TimeUnit timeUnit) {
-        return closeInternal(channel, null, timeout, timeUnit);
+    public Single<Void> close(@NonNull ChannelClient.Channel channel, int errorCode) {
+        return closeInternal(channel, errorCode);
     }
 
-    public Single<Status> close(@NonNull com.google.android.gms.wearable.Channel channel, int errorCode) {
-        return closeInternal(channel, errorCode, null, null);
-    }
-
-    public Single<Status> close(@NonNull com.google.android.gms.wearable.Channel channel, int errorCode, long timeout, @NonNull TimeUnit timeUnit) {
-        return closeInternal(channel, errorCode, timeout, timeUnit);
-    }
-
-    private Single<Status> closeInternal(com.google.android.gms.wearable.Channel channel, Integer errorCode, Long timeout, TimeUnit timeUnit) {
-        return Single.create(new ChannelCloseSingle(rxWear, channel, errorCode, timeout, timeUnit));
+    private Single<Void> closeInternal(ChannelClient.Channel channel, Integer errorCode) {
+        return Single.create(new ChannelCloseSingle(context, channel, errorCode));
     }
 
     // sendFile
 
-    public Single<Status> sendFile(@NonNull com.google.android.gms.wearable.Channel channel, @NonNull Uri uri) {
-        return sendFileInternal(channel, uri, null, null, null, null);
+    public Single<Void> sendFile(@NonNull ChannelClient.Channel channel, @NonNull Uri uri) {
+        return sendFileInternal(channel, uri, null, null);
     }
 
-    public Single<Status> sendFile(@NonNull com.google.android.gms.wearable.Channel channel, @NonNull Uri uri, long timeout, @NonNull TimeUnit timeUnit) {
-        return sendFileInternal(channel, uri, null, null, timeout, timeUnit);
+    public Single<Void> sendFile(@NonNull ChannelClient.Channel channel, @NonNull Uri uri, long startOffset, long length) {
+        return sendFileInternal(channel, uri, startOffset, length);
     }
 
-    public Single<Status> sendFile(@NonNull com.google.android.gms.wearable.Channel channel, @NonNull Uri uri, long startOffset, long length) {
-        return sendFileInternal(channel, uri, startOffset, length, null, null);
-    }
-
-    public Single<Status> sendFile(@NonNull com.google.android.gms.wearable.Channel channel, @NonNull Uri uri, long startOffset, long length, long timeout, @NonNull TimeUnit timeUnit) {
-        return sendFileInternal(channel, uri, startOffset, length, timeout, timeUnit);
-    }
-
-    private Single<Status> sendFileInternal(com.google.android.gms.wearable.Channel channel, Uri uri, Long startOffset, Long length, Long timeout, TimeUnit timeUnit) {
-        return Single.create(new ChannelSendFileSingle(rxWear, channel, uri, startOffset, length, timeout, timeUnit));
+    private Single<Void> sendFileInternal(ChannelClient.Channel channel, Uri uri, Long startOffset, Long length) {
+        return Single.create(new ChannelSendFileSingle(context, channel, uri, startOffset, length));
     }
 
     // receiveFile
 
-    public Single<Status> receiveFile(@NonNull com.google.android.gms.wearable.Channel channel, @NonNull Uri uri, boolean append) {
-        return receiveFileInternal(channel, uri, append, null, null);
+    public Single<Void> receiveFile(@NonNull ChannelClient.Channel channel, @NonNull Uri uri, boolean append) {
+        return receiveFileInternal(channel, uri, append);
     }
 
-    public Single<Status> receiveFile(@NonNull com.google.android.gms.wearable.Channel channel, @NonNull Uri uri, boolean append, long timeout, @NonNull TimeUnit timeUnit) {
-        return receiveFileInternal(channel, uri, append, timeout, timeUnit);
-    }
-
-    private Single<Status> receiveFileInternal(com.google.android.gms.wearable.Channel channel, Uri uri, boolean append, Long timeout, TimeUnit timeUnit) {
-        return Single.create(new ChannelReceiveFileSingle(rxWear, channel, uri, append, timeout, timeUnit));
+    private Single<Void> receiveFileInternal(ChannelClient.Channel channel, Uri uri, boolean append) {
+        return Single.create(new ChannelReceiveFileSingle(context, channel, uri, append));
     }
 
     // getInputStream
 
-    public Single<InputStream> getInputStream(@NonNull com.google.android.gms.wearable.Channel channel) {
-        return getInputStreamInternal(channel, null, null);
+    public Single<InputStream> getInputStream(@NonNull ChannelClient.Channel channel) {
+        return getInputStreamInternal(channel);
     }
 
-    public Single<InputStream> getInputStream(@NonNull com.google.android.gms.wearable.Channel channel, long timeout, @NonNull TimeUnit timeUnit) {
-        return getInputStreamInternal(channel, timeout, timeUnit);
-    }
-
-    private Single<InputStream> getInputStreamInternal(com.google.android.gms.wearable.Channel channel, Long timeout, TimeUnit timeUnit) {
-        return Single.create(new ChannelGetInputStreamSingle(rxWear, channel, timeout, timeUnit));
+    private Single<InputStream> getInputStreamInternal(ChannelClient.Channel channel) {
+        return Single.create(new ChannelGetInputStreamSingle(context, channel));
     }
 
     // getOutputStream
 
-    public Single<OutputStream> getOutputStream(@NonNull com.google.android.gms.wearable.Channel channel) {
-        return getOutputStreamInternal(channel, null, null);
+    public Single<OutputStream> getOutputStream(@NonNull ChannelClient.Channel channel) {
+        return getOutputStreamInternal(channel);
     }
 
-    public Single<OutputStream> getOutputStream(@NonNull com.google.android.gms.wearable.Channel channel, long timeout, @NonNull TimeUnit timeUnit) {
-        return getOutputStreamInternal(channel, timeout, timeUnit);
-    }
-
-    private Single<OutputStream> getOutputStreamInternal(com.google.android.gms.wearable.Channel channel, Long timeout, TimeUnit timeUnit) {
-        return Single.create(new ChannelGetOutputStreamSingle(rxWear, channel, timeout, timeUnit));
+    private Single<OutputStream> getOutputStreamInternal(ChannelClient.Channel channel) {
+        return Single.create(new ChannelGetOutputStreamSingle(context, channel));
     }
 
     // open
 
-    public Single<com.google.android.gms.wearable.Channel> open(@NonNull String nodeId, @NonNull String path) {
-        return openInternal(nodeId, path, null, null);
+    public Single<ChannelClient.Channel> open(@NonNull String nodeId, @NonNull String path) {
+        return openInternal(nodeId, path);
     }
 
-    public Single<com.google.android.gms.wearable.Channel> open(@NonNull String nodeId, @NonNull String path, long timeout, @NonNull TimeUnit timeUnit) {
-        return openInternal(nodeId, path, timeout, timeUnit);
-    }
-
-    private Single<com.google.android.gms.wearable.Channel> openInternal(String nodeId, String path, Long timeout, TimeUnit timeUnit) {
-        return Single.create(new ChannelOpenSingle(rxWear, nodeId, path, timeout, timeUnit));
+    private Single<ChannelClient.Channel> openInternal(String nodeId, String path) {
+        return Single.create(new ChannelOpenSingle(context, nodeId, path));
     }
 }

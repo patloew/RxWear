@@ -1,14 +1,13 @@
 package com.patloew.rxwear;
 
+import android.content.Context;
 import android.net.Uri;
 
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.Status;
-import com.google.android.gms.wearable.Channel;
-
-import java.util.concurrent.TimeUnit;
+import com.google.android.gms.wearable.ChannelClient;
+import com.google.android.gms.wearable.Wearable;
 
 import io.reactivex.SingleEmitter;
+import io.reactivex.annotations.NonNull;
 
 /* Copyright 2016 Patrick Löwenstein
  *
@@ -22,25 +21,30 @@ import io.reactivex.SingleEmitter;
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. */
-class ChannelReceiveFileSingle extends BaseSingle<Status> {
+ * limitations under the License.
+ *
+ * FILE MODIFIED by Marek Wałach, 2018
+ *
+ *
+ */
+class ChannelReceiveFileSingle extends BaseSingle<Void> {
 
-    final Channel channel;
+    final ChannelClient.Channel channel;
     final Uri uri;
     final boolean append;
 
-    ChannelReceiveFileSingle(RxWear rxWear, Channel channel, Uri uri, boolean append, Long timeout, TimeUnit timeUnit) {
-        super(rxWear, timeout, timeUnit);
+    ChannelReceiveFileSingle(Context context, @NonNull ChannelClient.Channel channel, Uri uri, boolean append) {
+        super(context);
         this.channel = channel;
         this.uri = uri;
         this.append = append;
     }
 
     @Override
-    protected void onGoogleApiClientReady(GoogleApiClient apiClient, final SingleEmitter<Status> emitter) {
-        setupWearPendingResult(
-                channel.receiveFile(apiClient, uri, append),
-                SingleResultCallBack.get(emitter)
+    void onSubscribe(SingleEmitter<Void> voidSingleEmitter) {
+        setupWearTask(
+                Wearable.getChannelClient(context).receiveFile(channel, uri, append),
+                SingleResultCallBack.get(voidSingleEmitter)
         );
     }
 }

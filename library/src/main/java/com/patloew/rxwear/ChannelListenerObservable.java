@@ -1,18 +1,16 @@
 package com.patloew.rxwear;
 
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
-import com.google.android.gms.wearable.Channel;
-import com.google.android.gms.wearable.ChannelApi;
+import android.content.Context;
+import android.support.annotation.NonNull;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.wearable.ChannelClient;
 import com.google.android.gms.wearable.Wearable;
 import com.patloew.rxwear.events.ChannelClosedEvent;
 import com.patloew.rxwear.events.ChannelEvent;
 import com.patloew.rxwear.events.ChannelOpenedEvent;
 import com.patloew.rxwear.events.InputClosedEvent;
 import com.patloew.rxwear.events.OutputClosedEvent;
-
-import java.util.concurrent.TimeUnit;
 
 import io.reactivex.ObservableEmitter;
 
@@ -28,53 +26,61 @@ import io.reactivex.ObservableEmitter;
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. */
+ * limitations under the License.
+ *
+ * FILE MODIFIED by Marek Wałach, 2018
+ *
+ *
+ */
 class ChannelListenerObservable extends BaseObservable<ChannelEvent> {
 
-    final Channel channel;
-    private ChannelApi.ChannelListener listener;
+    final ChannelClient.Channel channel;
+    private ChannelClient.ChannelCallback channelCallback;
 
-    ChannelListenerObservable(RxWear rxWear, Channel channel, Long timeout, TimeUnit timeUnit) {
-        super(rxWear, timeout, timeUnit);
+    ChannelListenerObservable(Context context, ChannelClient.Channel channel) {
+        super(context);
         this.channel = channel;
     }
 
     @Override
-    protected void onGoogleApiClientReady(GoogleApiClient apiClient, final ObservableEmitter<ChannelEvent> emitter) {
-        listener = new ChannelApi.ChannelListener() {
-            @Override public void onChannelOpened(Channel channel) {
-                emitter.onNext(new ChannelOpenedEvent(channel));
+    void onSubscribe(ObservableEmitter<ChannelEvent> channelEventObservableEmitter) {
+        channelCallback = new ChannelClient.ChannelCallback() {
+            @Override
+            public void onChannelOpened(@NonNull ChannelClient.Channel channel) {
+                channelEventObservableEmitter.onNext(new ChannelOpenedEvent(channel));
             }
 
-            @Override public void onChannelClosed(Channel channel, int closeReason, int appSpecificErrorCode) {
-                emitter.onNext(new ChannelClosedEvent(channel, closeReason, appSpecificErrorCode));
+            @Override
+            public void onChannelClosed(@NonNull ChannelClient.Channel channel, int closeReason, int appSpecificErrorCode) {
+                channelEventObservableEmitter.onNext(new ChannelClosedEvent(channel, closeReason, appSpecificErrorCode));
             }
 
-            @Override public void onInputClosed(Channel channel, int closeReason, int appSpecificErrorCode) {
-                emitter.onNext(new InputClosedEvent(channel, closeReason, appSpecificErrorCode));
+            @Override
+            public void onInputClosed(@NonNull ChannelClient.Channel channel, int closeReason, int appSpecificErrorCode) {
+                channelEventObservableEmitter.onNext(new InputClosedEvent(channel, closeReason, appSpecificErrorCode));
             }
 
-            @Override public void onOutputClosed(Channel channel, int closeReason, int appSpecificErrorCode) {
-                emitter.onNext(new OutputClosedEvent(channel, closeReason, appSpecificErrorCode));
+            @Override
+            public void onOutputClosed(@NonNull ChannelClient.Channel channel, int closeReason, int appSpecificErrorCode) {
+                channelEventObservableEmitter.onNext(new OutputClosedEvent(channel, closeReason, appSpecificErrorCode));
             }
         };
 
-        ResultCallback<Status> resultCallback = new StatusErrorResultCallBack(emitter);
+        OnCompleteListener<Void> resultCallback = new StatusErrorResultCallBack<>(channelEventObservableEmitter);
 
-        if(channel != null) {
-            setupWearPendingResult(channel.addListener(apiClient, listener), resultCallback);
+        if (channel != null) {
+            setupWearTask(Wearable.getChannelClient(context).registerChannelCallback(channel, channelCallback), resultCallback);
         } else {
-            setupWearPendingResult(Wearable.ChannelApi.addListener(apiClient, listener), resultCallback);
+            setupWearTask(Wearable.getChannelClient(context).registerChannelCallback(channelCallback), resultCallback);
         }
     }
 
-
     @Override
-    protected void onUnsubscribed(GoogleApiClient apiClient) {
-        if(channel != null) {
-            channel.removeListener(apiClient, listener);
+    void unSubscribe() {
+        if (channel != null) {
+            Wearable.getChannelClient(context).unregisterChannelCallback(channel, channelCallback);
         } else {
-            Wearable.ChannelApi.removeListener(apiClient, listener);
+            Wearable.getChannelClient(context).unregisterChannelCallback(channelCallback);
         }
     }
 }

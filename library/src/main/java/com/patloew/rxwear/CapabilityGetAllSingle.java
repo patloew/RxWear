@@ -1,12 +1,11 @@
 package com.patloew.rxwear;
 
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.wearable.CapabilityApi;
+import android.content.Context;
+
 import com.google.android.gms.wearable.CapabilityInfo;
 import com.google.android.gms.wearable.Wearable;
 
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import io.reactivex.SingleEmitter;
 
@@ -22,21 +21,26 @@ import io.reactivex.SingleEmitter;
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License. */
+ * limitations under the License.
+ *
+ * FILE MODIFIED by Marek Wałach, 2018
+ *
+ *
+ */
 class CapabilityGetAllSingle extends BaseSingle<Map<String, CapabilityInfo>> {
 
     final int nodeFilter;
 
-    CapabilityGetAllSingle(RxWear rxWear, int nodeFilter, Long timeout, TimeUnit timeUnit) {
-        super(rxWear, timeout, timeUnit);
+    CapabilityGetAllSingle(Context context, int nodeFilter) {
+        super(context);
         this.nodeFilter = nodeFilter;
     }
 
     @Override
-    protected void onGoogleApiClientReady(GoogleApiClient apiClient, final SingleEmitter<Map<String, CapabilityInfo>> emitter) {
-        setupWearPendingResult(
-                Wearable.CapabilityApi.getAllCapabilities(apiClient, nodeFilter),
-                SingleResultCallBack.get(emitter, CapabilityApi.GetAllCapabilitiesResult::getAllCapabilities)
+    void onSubscribe(SingleEmitter<Map<String, CapabilityInfo>> mapSingleEmitter) {
+        setupWearTask(
+                Wearable.getCapabilityClient(context).getAllCapabilities(nodeFilter),
+                SingleResultCallBack.get(mapSingleEmitter)
         );
     }
 }

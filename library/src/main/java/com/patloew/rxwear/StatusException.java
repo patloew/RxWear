@@ -1,7 +1,5 @@
 package com.patloew.rxwear;
 
-import com.google.android.gms.common.api.Status;
-
 /* Copyright (C) 2015 Michał Charmas (http://blog.charmas.pl)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,16 +13,13 @@ import com.google.android.gms.common.api.Status;
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * FILE MODIFIED by Marek Wałach, 2018
+ *
+ *
  */
 public class StatusException extends Exception {
-    private final Status status;
-
-    public StatusException(Status status) {
-        super(status.toString());
-        this.status = status;
-    }
-
-    public Status getStatus() {
-        return status;
+    public StatusException(Exception exception) {
+        super(exception);
     }
 }
